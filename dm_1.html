@@ -134,12 +134,13 @@ $(document).ready(function () {
 <div class="section level2">
 <h2>3. 实验过程</h2>
 <p>首先导入需要的程序包。</p>
-<pre><code>## Warning: package 'car' was built under R version 3.2.5</code></pre>
-<pre><code>## Warning: package 'DMwR' was built under R version 3.2.5</code></pre>
+<pre class="r"><code>library(car)
+library(lattice)
+library(DMwR)</code></pre>
 <pre><code>## Loading required package: grid</code></pre>
 <div class="section level3">
 <h3>3.1 读取数据</h3>
-<pre class="r"><code>algae = read.table('~/R/dm_1/Analysis.txt',
+<pre class="r"><code>algae = read.table('Analysis.txt',
 col.names=c('season','size','speed','mxPH','mnO2','Cl','NO3','NH4','oPO4','PO4','Chla',
     'a1','a2','a3','a4','a5','a6','a7'),
 na.string=c('XXXXXXX'))</code></pre>
@@ -227,7 +228,7 @@ abline(h=mean(algae$mxPH,na.rm=T),lty=2)</code></pre>
 <h3>剔除缺失值</h3>
 <pre class="r"><code>#剔除缺失数据
 omitdata = na.omit(algae)
-write.table(omitdata,'~/R/dm_1/OmitedData.txt',
+write.table(omitdata,'OmitedData.txt',
     col.names = F,row.names = F, quote = F)</code></pre>
 </div>
 <div class="section level3">
@@ -235,7 +236,7 @@ write.table(omitdata,'~/R/dm_1/OmitedData.txt',
 <pre class="r"><code>#使用高频数据替换
 preprocess2 = algae[-manyNAs(algae),]
 preprocess2 = centralImputation(preprocess2)
-write.table(preprocess2,'~/R/dm_1/CentralImputationData.txt',
+write.table(preprocess2,'CentralImputationData.txt',
 col.names = F,row.names = F, quote = F)</code></pre>
 </div>
 <div class="section level3">
@@ -275,14 +276,14 @@ fillPO4 &lt;- function(oP){
     else return (42.897 + 1.293 * oP)
 }
 preprocess3[is.na(preprocess3$PO4),'PO4'] &lt;- sapply(preprocess3[is.na(preprocess3$PO4),'oPO4'],fillPO4)
-write.table(preprocess3,'~/R/dm_1/linearDefaultData.txt',
+write.table(preprocess3,'linearDefaultData.txt',
 col.names = F,row.names = F, quote = F)</code></pre>
 </div>
 <div class="section level3">
 <h3>通过数据对象之间的相似型来填补缺失值</h3>
 <pre class="r"><code>#通过数据对象之间的相似型来填补缺失值
 preprocess4 = knnImputation(algae,k=10)
-write.table(preprocess4,'~/R/dm_1/knnImputationData.txt',
+write.table(preprocess4,'knnImputationData.txt',
 col.names = F,row.names = F, quote = F)</code></pre>
 </div>
 </div>

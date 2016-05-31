@@ -22,14 +22,14 @@ install.packages('car','lattice','DMwR')
 ## 3. 实验过程
 首先导入需要的程序包。
 
-```{r echo=FALSE}
+```{r warning=FALSE}
 library(car)
 library(lattice)
 library(DMwR)
 ```
 ### 3.1 读取数据
 ```{r}
-algae = read.table('~/R/dm_1/Analysis.txt',
+algae = read.table('Analysis.txt',
 col.names=c('season','size','speed','mxPH','mnO2','Cl','NO3','NH4','oPO4','PO4','Chla',
 	'a1','a2','a3','a4','a5','a6','a7'),
 na.string=c('XXXXXXX'))
@@ -85,7 +85,7 @@ bwplot(size~a1,data=algae,ylab='River Size',xlab='a1')
 ```{r}
 #剔除缺失数据
 omitdata = na.omit(algae)
-write.table(omitdata,'~/R/dm_1/OmitedData.txt',
+write.table(omitdata,'OmitedData.txt',
 	col.names = F,row.names = F, quote = F)
 ```
 
@@ -94,7 +94,7 @@ write.table(omitdata,'~/R/dm_1/OmitedData.txt',
 #使用高频数据替换
 preprocess2 = algae[-manyNAs(algae),]
 preprocess2 = centralImputation(preprocess2)
-write.table(preprocess2,'~/R/dm_1/CentralImputationData.txt',
+write.table(preprocess2,'CentralImputationData.txt',
 col.names = F,row.names = F, quote = F)
 ```
 
@@ -110,7 +110,7 @@ fillPO4 <- function(oP){
 	else return (42.897 + 1.293 * oP)
 }
 preprocess3[is.na(preprocess3$PO4),'PO4'] <- sapply(preprocess3[is.na(preprocess3$PO4),'oPO4'],fillPO4)
-write.table(preprocess3,'~/R/dm_1/linearDefaultData.txt',
+write.table(preprocess3,'linearDefaultData.txt',
 col.names = F,row.names = F, quote = F)
 ```
 
@@ -118,7 +118,7 @@ col.names = F,row.names = F, quote = F)
 ```{r}
 #通过数据对象之间的相似型来填补缺失值
 preprocess4 = knnImputation(algae,k=10)
-write.table(preprocess4,'~/R/dm_1/knnImputationData.txt',
+write.table(preprocess4,'knnImputationData.txt',
 col.names = F,row.names = F, quote = F)
 ```
 
