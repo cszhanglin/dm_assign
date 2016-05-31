@@ -1,0 +1,187 @@
+---
+title: "数据挖掘作业1——海藻数据分析"
+author: "张霖"
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+---
+
+## 1. 实验环境配置
+Windows 10
+
+R 3.2.4
+
+RStudio 0.99
+
+## 2. R语言内配置
+```{r eval=FALSE}
+install.packages('car','lattice','DMwR')
+```
+
+## 3. 实验过程
+首先导入需要的程序包。
+
+```{r echo=FALSE}
+library(car)
+library(lattice)
+library(DMwR)
+```
+### 3.1 读取数据
+```{r}
+algae = read.table('~/R/dm_1/Analysis.txt',
+col.names=c('season','size','speed','mxPH','mnO2','Cl','NO3','NH4','oPO4','PO4','Chla',
+	'a1','a2','a3','a4','a5','a6','a7'),
+na.string=c('XXXXXXX'))
+```
+代码如上所示。使用read.table函数将文本文档中的数据读取为R语言的data.frame类型。三个参数分别代表文件路径、列名以及缺失值设定。
+
+### 3.2 数据摘要
+```{r}
+summary(algae)
+```
+
+### 3.3 数据可视化
+
+这里以mxPH为例对数据可视化结果进行解释和分析。
+
+####3.3.1 绘制直方图以及Q-Q图
+```{r}
+#绘制直方图
+hist(algae$mxPH)
+#绘制QQ图
+qqPlot(algae$mxPH,main='Norm QQ Plot of mxPH')
+```
+
+绘制直方图和Q-Q图的代码如上图所示。Q-Q图用的是分布的分位数来做检验。如果数据为正态分布，则在Q-Q正态分布图中，数据点应基本在图中对角线上。
+
+Q-Q图中，红色实线表示Q-Q线，红色虚线表示置信度95%的置信区间。观察直方图和Q-Q图，可以看出数据大体符合高斯分布。
+
+观察其他属性的结果，mxPH2基本符合高斯分布，而其他属性不符合高斯分布。
+
+####3.3.2 绘制盒图
+
+盒图也叫N-S图，有助于我们判断数据集的数据离散度和识别离群点。
+
+```{r}
+boxplot(algae$mxPH,ylab='mxPH')
+rug(algae$mxPH,side=4)
+abline(h=mean(algae$mxPH,na.rm=T),lty=2)
+```
+
+图中虚线是均值，盒图中央实线是中位数。较小离群点较多导致均值高于中位数，总的来说离群点较少。
+
+###3.3.3 绘制条件盒图
+```{r}
+bwplot(size~a1,data=algae,ylab='River Size',xlab='a1')
+```
+
+上图是a1海藻的条件盒图。可见，在规模较小的河流中，海藻a1的频率最高。
+
+
+##3.4 缺失数据处理
+
+###剔除缺失值
+```{r}
+#剔除缺失数据
+omitdata = na.omit(algae)
+write.table(omitdata,'~/R/dm_1/OmitedData.txt',
+	col.names = F,row.names = F, quote = F)
+```
+
+###使用高频数据替换
+```{r}
+#使用高频数据替换
+preprocess2 = algae[-manyNAs(algae),]
+preprocess2 = centralImputation(preprocess2)
+write.table(preprocess2,'~/R/dm_1/CentralImputationData.txt',
+col.names = F,row.names = F, quote = F)
+```
+
+###通过变量相关性填补缺失值
+```{r}
+#通过变量相关性填补缺失值
+symnum(cor(algae[,4:18],use='complete.obs'))
+lm(formula=PO4~oPO4, data=algae)
+preprocess3 = algae[-manyNAs(algae),]
+fillPO4 <- function(oP){
+	if(is.na(oP))
+		return(NA)
+	else return (42.897 + 1.293 * oP)
+}
+preprocess3[is.na(preprocess3$PO4),'PO4'] <- sapply(preprocess3[is.na(preprocess3$PO4),'oPO4'],fillPO4)
+write.table(preprocess3,'~/R/dm_1/linearDefaultData.txt',
+col.names = F,row.names = F, quote = F)
+```
+
+###通过数据对象之间的相似型来填补缺失值
+```{r}
+#通过数据对象之间的相似型来填补缺失值
+preprocess4 = knnImputation(algae,k=10)
+write.table(preprocess4,'~/R/dm_1/knnImputationData.txt',
+col.names = F,row.names = F, quote = F)
+```
+
+##4. 其他代码及结果
+
+###4.1 直方图及盒图
+```{r}
+hist(algae$mxPH)
+qqPlot(algae$mxPH,main='Norm QQ Plot of mxPH')
+boxplot(algae$mxPH,ylab='mxPH')
+rug(algae$mxPH,side=4)
+abline(h=mean(algae$mxPH,na.rm=T),lty=2)
+
+hist(algae$mnO2)
+qqPlot(algae$mnO2,main='Norm QQ Plot of mnO2')
+boxplot(algae$mnO2,ylab='mnO2')
+rug(algae$mnO2,side=4)
+abline(h=mean(algae$mnO2,na.rm=T),lty=2)
+
+hist(algae$Cl)
+qqPlot(algae$Cl,main='Norm QQ Plot of Cl')
+boxplot(algae$Cl,ylab='Cl')
+rug(algae$Cl,side=4)
+abline(h=mean(algae$Cl,na.rm=T),lty=2)
+
+hist(algae$NO3)
+qqPlot(algae$NO3,main='Norm QQ Plot of NO3')
+boxplot(algae$NO3,ylab='NO3')
+rug(algae$NO3,side=4)
+abline(h=mean(algae$NO3,na.rm=T),lty=2)
+
+hist(algae$NH4)
+qqPlot(algae$NH4,main='Norm QQ Plot of NH4')
+boxplot(algae$NH4,ylab='NH4')
+rug(algae$NH4,side=4)
+abline(h=mean(algae$NH4,na.rm=T),lty=2)
+
+hist(algae$oPO4)
+qqPlot(algae$oPO4,main='Norm QQ Plot of oPO4')
+boxplot(algae$oPO4,ylab='oPO4')
+rug(algae$oPO4,side=4)
+abline(h=mean(algae$oPO4,na.rm=T),lty=2)
+
+hist(algae$PO4)
+qqPlot(algae$PO4,main='Norm QQ Plot of PO4')
+boxplot(algae$PO4,ylab='PO4')
+rug(algae$PO4,side=4)
+abline(h=mean(algae$PO4,na.rm=T),lty=2)
+
+hist(algae$Chla)
+qqPlot(algae$Chla,main='Norm QQ Plot of Chla')
+boxplot(algae$Chla,ylab='Chla')
+rug(algae$Chla,side=4)
+abline(h=mean(algae$Chla,na.rm=T),lty=2)
+```
+
+###4.2 条件盒图
+```{r}
+bwplot(size~a1,data=algae,ylab='River Size',xlab='a1')
+bwplot(size~a2,data=algae,ylab='River Size',xlab='a2')
+bwplot(size~a3,data=algae,ylab='River Size',xlab='a3')
+bwplot(size~a4,data=algae,ylab='River Size',xlab='a4')
+bwplot(size~a5,data=algae,ylab='River Size',xlab='a5')
+bwplot(size~a6,data=algae,ylab='River Size',xlab='a6')
+bwplot(size~a7,data=algae,ylab='River Size',xlab='a7')
+```
